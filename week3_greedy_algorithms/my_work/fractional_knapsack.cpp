@@ -12,7 +12,12 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 
+//using std::rand;
+//using std::time;
+//using std::srand;
 using std::vector;
 
 /**
@@ -37,7 +42,7 @@ double Item::ratio() const {
 
 bool Item::operator< (const Item &other) const {
     double lhs = this->ratio(), rhs = other.ratio();
-    if (lhs < rhs || lhs == rhs) return true;
+    if (lhs < rhs) return true;
     return false;
 }
 
@@ -78,6 +83,38 @@ double get_optimal_value(int capacity, vector<int> weights, vector<int> values) 
     return val;
 }
 
+//void try_to_produce_segmentation_fault() {
+//    // initialize random seed
+//    srand(time(NULL));
+//    int n = rand() % 1000;
+//    int W = rand() % 2000000000;
+//    vector<int> weights(n, 0);
+//    vector<int>values(n, 0);
+//    for (int i = 0; i < n; i++) {
+//        weights[i] = rand() % 2000000;
+//        values[i] = rand() % 2000000;
+//    }
+//    std::cout.precision(10);
+//    std::cout << std::fixed << "n: " << n << '\n'
+//             << "capacity: " << W << '\n'
+//             << "optimal_value: " << get_optimal_value(W, weights, values)
+//             << std::endl;
+//
+//}
+//
+//void test_corner_cases() {
+//    vector<int> empty_weights, empty_values;
+//    vector<int> max_weights (1000, 2000000);
+//    vector<int> max_values (1000, 2000000);
+//    std::cout.precision(10);
+//    std::cout << std::fixed << "n = 0, capacity = 0: " << get_optimal_value(0, empty_weights, empty_values) << '\n';
+//    std::cout << "n = 1000, capacity = 0:  " << get_optimal_value(0, max_weights, max_values) << '\n';
+//    std::cout << "n = 0, capacity = 2000000:  " << get_optimal_value(2000000, empty_weights, empty_values) << '\n';
+//    std::cout << "n = 1000, capacity = 2000000:  " << get_optimal_value(200000, max_weights, max_values) << '\n';
+//    std::cout << std::endl;
+
+//}
+
 int main() {
     int n;
     int capacity;
@@ -91,5 +128,13 @@ int main() {
     double optimal_value = get_optimal_value(capacity, weights, values);
     std::cout.precision(10);
     std::cout << std::fixed << optimal_value << std::endl;
+
+
+//    while (true) {
+//        try_to_produce_segmentation_fault();
+//    }
+
+//    test_corner_cases();
+
     return 0;
 }
