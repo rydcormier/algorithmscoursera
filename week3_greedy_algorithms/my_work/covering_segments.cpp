@@ -25,53 +25,18 @@ public:
     int start, end;
     
     Segment (int a, int b) : start(a), end(b) {};
-    int length() const { return this->end - this->start; }
     bool covers(int x) const { return (x >= this->start && x <= this->end); }
-    bool intersects(const Segment&) const;
-    Segment* intersection(const Segment&) const;
     bool operator< (const Segment&) const;
 };
 
 bool Segment::operator<(const Segment &other) const {
-    // first compare starts
-    if (this->start < other.start) return true;
+    // first compare ends
+    if (this->end < other.end) return true;
     
-    // if starts are the same - the shorter segment is less then
-    if (this->start == other.start) return (this->length() < other.length());
+    // if ends are the same - the smaller start is less
+    if (this->end == other.end) return (this->start < other.start);
     
     return false;
-}
-
-bool Segment::intersects(const Segment &other) const {
-    const Segment *smaller;
-    const Segment *larger;
-    
-    if (this->operator<(other)) {
-        smaller = this;
-        larger = &other;
-    }
-    else {
-        smaller = &other;
-        larger = this;
-    }
-    
-    // intersection implies the end of the smaller segment is covered by the larger
-    return larger->covers(smaller->end);
-}
-
-Segment* Segment::intersection(const Segment &other) const {
-    Segment *result = NULL;
-    if (this->intersects(other)) {
-        // the start is the smaller end
-        int s = std::min(this->end, other.end);
-        
-        // the end is the larger start
-        int e = std::max(this->start, other.start);
-        
-        result = new Segment(s, e);
-    }
-    
-    return result;
 }
 
 /**
@@ -82,37 +47,27 @@ Segment* Segment::intersection(const Segment &other) const {
  *
  **/
 vector<int> optimal_points(vector<Segment> &segments) {
-    
-    // if there is only one segment, return its start.
+
+    // if there is only one segment, return its start point.
     if (segments.size() == 1) return vector<int>(1, segments[0].start);
     
     vector<int> points;
     
     // order segments
     std::sort(segments.begin(), segments.end());
+
+    // gready choice start at first end
+    int x = segments.front().end;
     
-    // gready choice start at first end and end at last start
-    int lbound = segments.front().end;
-    int rbound = segments.back().start;
-    
-    // definitely need lbound
-    points.push_back(lbound);
-    
-    // move from left to right
     vector<Segment>::iterator iter = segments.begin();
-    int x = lbound;
     
-    //bool current_segment_covers = true;
-    while (iter != segments.end() && x <= rbound) {
-        if (iter->covers(x)) {
-            if (points.back() != x) {
-                points.push_back(x);
-            }
-            // current segment is covering, move to the next segment
+    while (iter != segments.end()) {
+
+        if (points.size() > 0 && iter->covers(points.back())) {
             ++iter;
-        }
-        else {
-            // current segment is not covering, move to next x
+        } else {
+            // if we're at end of segment, add x to points
+            if (x == iter->end) points.push_back(x);
             ++x;
         }
     }
@@ -126,10 +81,13 @@ int main() {
     for (size_t i = 0; i < segments.size(); ++i) {
         std::cin >> segments[i].start >> segments[i].end;
     }
+    
     vector<int> points = optimal_points(segments);
+    
     std::cout << points.size() << "\n";
     for (size_t i = 0; i < points.size(); ++i) {
         std::cout << points[i] << " ";
     }
+    return 0;
 }
 

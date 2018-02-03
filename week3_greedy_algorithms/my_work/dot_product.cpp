@@ -109,7 +109,7 @@ int main() {
     }
     std::cout << max_dot_product(a, b) << std::endl;
 
-    test_corner_cases();
+//    test_corner_cases();
 
 //    stress_test();
     return 0;
