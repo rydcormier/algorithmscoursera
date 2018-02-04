@@ -67,8 +67,12 @@ vector<int> optimal_points(vector<Segment> &segments) {
             ++iter;
         } else {
             // if we're at end of segment, add x to points
-            if (x == iter->end) points.push_back(x);
-            ++x;
+            if (x == iter->end) {
+                points.push_back(x);
+            } else {
+                x = iter->end;
+            }
+            
         }
     }
     return points;
