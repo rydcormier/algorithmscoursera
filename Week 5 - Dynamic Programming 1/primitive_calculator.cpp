@@ -1,3 +1,10 @@
+/**
+ *  primitive_calculator.cpp
+ *
+ *  Author: Ryan Cormier <rydcormier@gmail.com>
+ *  Date:   March 4, 2018
+ **/
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -35,24 +42,24 @@ vector<int> optimal_sequence_greedy(int n) {
 vector<int> optimal_sequence(int num) {
     vector<int> min_num_seq[num + 1];
     min_num_seq[1] = vector<int>(1, 1);
-    
+
     for (int n = 2; n <= num; ++n) {
         min_num_seq[n] = gen_basic_sequence(n);
         min_num_seq[0] = vector<int>();
         min_num_seq[1] = vector<int>(1,1);
         vector<int> seq;
-        
+
         for (int n = 2; n <= num; ++n) {
             // define longest sequence for n
             min_num_seq[n] = gen_basic_sequence(n);
-            
+
             //+1 op
             seq = min_num_seq[n - 1];
             seq.push_back(n);
             if (num_ops(seq) < num_ops(min_num_seq[n])) {
                 min_num_seq[n] = seq;
             }
-            
+
             //*2 op
             if (n % 2 == 0) {
                 seq = min_num_seq[n%2];
@@ -61,7 +68,7 @@ vector<int> optimal_sequence(int num) {
                     min_num_seq[n] = seq;
                 }
             }
-            
+
             //*3 op
             if (n % 2 == 0) {
                 seq = min_num_seq[n%2];
@@ -72,7 +79,7 @@ vector<int> optimal_sequence(int num) {
             }
         }
     }
-    
+
     return min_num_seq[num];
 }
 
