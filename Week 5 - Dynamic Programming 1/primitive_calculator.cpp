@@ -11,20 +11,22 @@
 
 using std::vector;
 
-vector<int> gen_basic_sequence(int n) {
-    vector<int> res(n);
+typedef vector<int> Sequence;
+
+Sequence gen_basic_sequence(int n) {
+    Sequence res(n);
     for (int i = 1; i <= n; ++i) {
         res[i - 1] = i;
     }
     return res;
 }
 
-int num_ops(vector<int> seq) {
+int num_ops(Sequence seq) {
     return seq.size() - 1;
 }
 
-vector<int> optimal_sequence_greedy(int n) {
-  std::vector<int> sequence;
+Sequence optimal_sequence_greedy(int n) {
+  Sequence sequence;
   while (n >= 1) {
     sequence.push_back(n);
     if (n % 3 == 0) {
@@ -39,15 +41,15 @@ vector<int> optimal_sequence_greedy(int n) {
   return sequence;
 }
 
-vector<int> optimal_sequence(int num) {
-    vector<int> min_num_seq[num + 1];
-    min_num_seq[1] = vector<int>(1, 1);
+Sequence optimal_sequence(int num) {
+    vector<Sequence> min_num_seq(num + 1);
+    min_num_seq[1] = Sequence(1, 1);
 
     for (int n = 2; n <= num; ++n) {
         min_num_seq[n] = gen_basic_sequence(n);
-        min_num_seq[0] = vector<int>();
-        min_num_seq[1] = vector<int>(1,1);
-        vector<int> seq;
+        min_num_seq[0] = Sequence();
+        min_num_seq[1] = Sequence(1,1);
+        Sequence seq;
 
         for (int n = 2; n <= num; ++n) {
             // define longest sequence for n
@@ -85,15 +87,13 @@ vector<int> optimal_sequence(int num) {
 
 int main() {
     int n;
-    std::cin >> n;
-    vector<int> sequence = optimal_sequence_greedy(n);
-    std::cout << sequence.size() - 1 << std::endl;
-    for (size_t i = 0; i < sequence.size(); ++i) {
+    while (n != 0) {
+      std::cin >> n;
+      Sequence sequence = optimal_sequence(n);
+      std::cout << sequence.size() - 1 << std::endl;
+      for (size_t i = 0; i < sequence.size(); ++i) {
         std::cout << sequence[i] << " ";
-    }
-    vector<int> sequence1 = optimal_sequence(n);
-    std::cout << sequence1.size() - 1 << std::endl;
-    for (size_t i = 0; i < sequence1.size(); ++i) {
-        std::cout << sequence1[i] << " ";
-    }
+      }
+      std::cout << std::endl;
+  }
 }
