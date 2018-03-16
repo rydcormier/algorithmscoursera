@@ -1,3 +1,7 @@
+/**
+ *  placing_parentheses.cpp
+ **/
+
 #include <iostream>
 #include <cassert>
 #include <string>
@@ -8,22 +12,35 @@ using std::string;
 using std::max;
 using std::min;
 
+/**
+ *  struct Expression
+ *
+ *  Represents an arithmetic expression storing the digits and operations
+ *  seperately.
+ **/
 struct Expression {
     vector<int> digits;
     string ops;
 
+    // Pad beginning to avoid offset indeces.
     Expression() : digits(vector<int>(1, 0)), ops(" ") {}
-}
+};
 
 struct Range {
     long long minimum;
     long long maximum;
 
     Range() : minimum(0), maximum(0) {}
-}
+};
 
 using Table = vector<vector<Range>>;
 
+/**
+ *  function split_string
+ *
+ *  Takes an arithmetic expression string (i.e "1+2-3...") and returns an
+ *  Expression object which stores the digits and operations of the expression.
+ **/
 Expression split_string(const string &s) {
     Expression exp;
     assert(s.length() % 2 == 1); // must be odd number
@@ -39,20 +56,35 @@ Expression split_string(const string &s) {
 }
 
 long long eval(long long a, long long b, char op) {
-  if (op == '*') {
-    return a * b;
-  } else if (op == '+') {
-    return a + b;
-  } else if (op == '-') {
-    return a - b;
-  } else {
-    assert(0);
-  }
+    if (op == '*') {
+        return a * b;
+    } else if (op == '+') {
+        return a + b;
+    } else if (op == '-') {
+        return a - b;
+    } else {
+        assert(0);
+    }
 }
 
-Range min_and_max(const Expression &exp, const Table &table, size_t i, size_t j)
-{
+/**
+ *  function min_and_max
+ *
+ *  Finds the minimum and maximum values of an expression. If indeces i and j
+ *  are given, the subexpression from the ith to the jth digit is evaluated,
+ *  else the entire expression is used.
+ *
+ *  Arguments:
+ *      exp:    Expression to be evaluated
+ *      table:  The table of minimum and maximum values already computed for
+ *              previous subexpressions.
+ *      i:      The starting index, or 1 if not given.
+ *      j:      The ending index, or the end of the expression if not given.
+ **/
+Range min_and_max(const Expression &exp, const Table &table, size_t i = 1,
+    size_t j = 0) {
     if (i == j) return table[i][j];
+    if (j == 0) j = exp.digits.size();
     Range res;
     for (size_t k = i; i < j; ++i) {
         Range lhs = table[i][k], rhs = table[k + 1][j];
@@ -71,14 +103,10 @@ Range min_and_max(const Expression &exp, const Table &table, size_t i, size_t j)
     return res;
 }
 
-Range min_and_max(const Expression &exp, const Table &table) {
-    return min_and_max(exp, table, 0, exp.size());
-}
-
 long long get_maximum_value(const string &s) {
     Expression exp = split_string(s);
     int n = exp.digits.size();
-    Table table(vector(n, vector(n, Range())));
+    Table table(n, vector<Range>(n, Range()));
     for (int i = 1; i < exp.digits.size(); ++i) {
         int d = exp.digits[i];
         table[i][i].minimum = d;
@@ -94,7 +122,7 @@ long long get_maximum_value(const string &s) {
 }
 
 int main() {
-  string s;
-  std::cin >> s;
-  std::cout << get_maximum_value(s) << '\n';
+    string s;
+    std::cin >> s;
+    std::cout << get_maximum_value(s) << '\n';
 }
