@@ -1,3 +1,10 @@
+/**
+ *  phone_book.cpp
+ *  Data Structures: Programming Assignment 3
+ *
+ *  Author: Ryan Cormier <rydcormier@gmail.com>
+ *  Date:   May 9, 2018
+ **/
 #include <iostream>
 #include <vector>
 #include <string>
@@ -31,6 +38,23 @@ void write_responses(const vector<string>& result) {
 }
 
 vector<string> process_queries(const vector<Query>& queries) {
+    vector<string> result;
+    // use direct addressing for possible numbers - 10^7
+    string nf = "not found";
+    vector<string*> Name(10000000, &nf);
+    for (size_t i = 0; i < queries.size(); i++) {
+        if (queries[i].type == "add") {
+            Name[queries[i].number] = new string(queries[i].name);
+        } else if (queries[i].type == "del") {
+            Name[queries[i].number] = &nf;
+        } else {
+            result.push_back(*Name[queries[i].number]);
+        }
+    }
+    return result;
+}
+
+vector<string> process_queries_naive(const vector<Query>& queries) {
     vector<string> result;
     // Keep list of all existing (i.e. not deleted yet) contacts.
     vector<Query> contacts;
@@ -70,3 +94,4 @@ int main() {
     write_responses(process_queries(read_queries()));
     return 0;
 }
+
