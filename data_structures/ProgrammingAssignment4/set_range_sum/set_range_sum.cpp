@@ -188,19 +188,13 @@ Vertex * next(Vertex *v) {
 }
 
 void erase(int x) {
-    // If x is found, splay successor and then the found node
     if (root == NULL) {
         return;
     }
     Vertex *v = find(root, x);
-    if (v == NULL) {
-        return;
-    }
     if (v == NULL || v->key != x) {
         return;
     }
-    //splay(root, next(v));
-    //splay(root, v);
     Vertex* l = v->left;
     Vertex* r = v->right;
     if (l == NULL && r == NULL) {
