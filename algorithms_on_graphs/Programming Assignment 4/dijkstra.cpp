@@ -46,6 +46,9 @@ int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t
     while (! pq.empty()) {
         Node u = pq.top();
         pq.pop();
+        if (u.dist < 0) { // already processed all reachable nodes
+            break;
+        }
         if (processed[u.key]) {
             continue;
         }
