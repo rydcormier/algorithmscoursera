@@ -17,34 +17,23 @@ using std::pair;
 using std::priority_queue;
 
 int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t) {
-    // Initialize all distances: use -1 as infinity and set source to 0
+    // Initialize all distances: use -1 int as infinity and set source to 0
     vector<int> dist(adj.size(), -1);
     dist[s] = 0;
     
     // Priority queue for vertices, which are pairs with dist being first
     priority_queue<pair<int, int>, vector<pair<int, int> >, std::greater<pair<int, int> >> pq;
-    for (int i = 0; i < adj.size(); i++) {
-        if (i == s) {
-            pq.push(std::make_pair(0, i));
-        } else {
-            pq.push(std::make_pair(std::numeric_limits<int>::max(), i));
-        }
-    }
+    pq.push(std::make_pair(0, s));
     
     // Track processed vertices to allow multiple entries in queue
     vector<bool> processed(adj.size(), false);
     
-    // iterate through priority queue
     while (!pq.empty()) {
         pair<int, int> u = pq.top();
         pq.pop();
         
         if (processed[u.second]) {  // redundant entry
             continue;
-        }
-        
-        if (dist[u.second] == -1) { // remaing vertices are unreachable
-            break;
         }
         
         processed[u.second] = true;
@@ -80,3 +69,4 @@ int main() {
     s--; t--;
     std::cout << distance(adj, cost, s, t);
 }
+
