@@ -9,60 +9,58 @@
 #include <vector>
 #include <queue>
 #include <functional>
+#include <limits>
 
 using std::vector;
 using std::queue;
 using std::pair;
 using std::priority_queue;
 
-struct Node {
-    int key;
-    int dist;
-    
-    Node(int k, int d) : key(k), dist(d) {}
-    
-    bool operator< (const Node &rhs) const {
-        if (dist == -1) {
-            return false;
-        } else if (dist == 0) {
-            return true;
-        }
-        return dist < rhs.dist;
-    }
-    
-    bool operator> (const Node &rhs) const {
-        return !operator<(rhs);
-    }
-};
-
 int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t) {
+    // Initialize all distances: use -1 as infinity and set source to 0
     vector<int> dist(adj.size(), -1);
     dist[s] = 0;
-    vector<bool> processed(adj.size(), false);
-    priority_queue<Node, vector<Node>, std::greater<Node>> pq;
-    for (int k = 0; k < adj.size(); k++) {
-        pq.push(Node(k, dist[k]));
-    }
-    while (! pq.empty()) {
-        Node u = pq.top();
-        pq.pop();
-        if (u.dist < 0) { // already processed all reachable nodes
-            break;
+    
+    // Priority queue for vertices, which are pairs with dist being first
+    priority_queue<pair<int, int>, vector<pair<int, int> >, std::greater<pair<int, int> >> pq;
+    for (int i = 0; i < adj.size(); i++) {
+        if (i == s) {
+            pq.push(std::make_pair(0, i));
+        } else {
+            pq.push(std::make_pair(std::numeric_limits<int>::max(), i));
         }
-        if (processed[u.key]) {
+    }
+    
+    // Track processed vertices to allow multiple entries in queue
+    vector<bool> processed(adj.size(), false);
+    
+    // iterate through priority queue
+    while (!pq.empty()) {
+        pair<int, int> u = pq.top();
+        pq.pop();
+        
+        if (processed[u.second]) {  // redundant entry
             continue;
         }
-        processed[u.key] = true;
-        // iterate through edges;
-        for (int i = 0; i < adj[u.key].size(); i++) {
-            int v = adj[u.key][i];
-            int w = cost[u.key][i];
-            if (dist[v] > dist[u.key] + w || dist[v] == -1) {
-                dist[v] = dist[u.key] + w;
-                pq.push(Node(v, dist[v]));
+        
+        if (dist[u.second] == -1) { // remaing vertices are unreachable
+            break;
+        }
+        
+        processed[u.second] = true;
+        
+        for (int i = 0; i < adj[u.second].size(); i++) {
+            int v = adj[u.second][i];
+            int w = cost[u.second][i];
+            
+            // relax edge
+            if (dist[v] > dist[u.second] + w || dist[v] == -1) {
+                dist[v] = dist[u.second] + w;
+                pq.push(std::make_pair(dist[v], v));
             }
         }
     }
+    
     return dist[t];
 }
 
@@ -79,6 +77,6 @@ int main() {
     }
     int s, t;
     std::cin >> s >> t;
-    s--, t--;
+    s--; t--;
     std::cout << distance(adj, cost, s, t);
 }
