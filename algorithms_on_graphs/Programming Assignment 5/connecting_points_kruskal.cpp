@@ -117,4 +117,3 @@ int main() {
     }
     std::cout << std::setprecision(10) << minimum_distance(points) << std::endl;
 }
-

@@ -83,18 +83,9 @@ struct Edge {
     }
 };
 
-void print_point(const Point &point) {
-    std::cout << "(" << point.first << ", " << point.second << ")";
-}
-
-void print_edge(const Edge &edge) {
-    print_point(edge.start.value);
-    std::cout << " -> ";
-    print_point(edge.end.value);
-    std::cout << " : " << edge.weight << std::endl;
-}
-
 double clustering(vector<Point> &points, size_t k) {
+    // group points into k clusters and return the minimum distance between 2
+    // points in different clusters.
     double res = std::numeric_limits<double>::max();
     vector<Edge> edges;
     vector<vector<double> > dist(points.size(), vector<double>(points.size()));
