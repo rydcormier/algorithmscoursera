@@ -84,19 +84,15 @@ struct Edge {
 };
 
 double clustering(vector<Point> &points, size_t k) {
-    // group points into k clusters and return the minimum distance between 2
-    // points in different clusters.
-    double res = std::numeric_limits<double>::max();
+    // returns the minimum distance between clusters such that the given points are
+    // seperated into k partitions.
     vector<Edge> edges;
-    vector<vector<double> > dist(points.size(), vector<double>(points.size()));
     for (size_t i = 0; i < points.size() - 1; i++) {
         for (size_t j = 1; j < points.size(); j++) {
             Vertex u(i, points[i]);
             Vertex v(j, points[j]);
             double w = segment_square(u.value, v.value);
             edges.push_back(Edge(u, v, w));
-            dist[i][j] = w;
-            dist[j][i] = w;
         }
     }
     Disjoint_Set ds(points.size());
@@ -112,16 +108,13 @@ double clustering(vector<Point> &points, size_t k) {
         idx++;
     }
     
-    // find the minimum dist between two points in different sets
-    for (size_t i = 0; i < dist.size() - 1; i++) {
-        for (size_t j = 1; j < dist.size(); j++) {
-            if (ds.find(i) != ds.find(j)) {
-                res = std::min(res, dist[i][j]);
-            }
-        }
+    // the next edge with vertices in different clusters gives the min dist
+    while (ds.find(edges[idx].start.key) == ds.find(edges[idx].end.key)) {
+        idx++;
     }
-    return std::sqrt(res);
+    return std::sqrt(edges[idx].weight);
 }
+
 
 int main() {
     size_t n;
