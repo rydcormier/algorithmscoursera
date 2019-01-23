@@ -71,6 +71,7 @@ void print_tree(const Tree &tree, const string &text)
     }
 }
 
+// called by build_suffix_tree
 void split_node(Tree &tree, size_t node, size_t pos, size_t k, const string &text)
 {
     if (Debug)
