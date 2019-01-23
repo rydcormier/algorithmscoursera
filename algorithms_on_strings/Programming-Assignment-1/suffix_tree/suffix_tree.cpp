@@ -17,7 +17,6 @@ using std::map;
 using std::string;
 using std::vector;
 
-size_t const NA = 5002;
 bool Debug = false;
 
 struct Node
@@ -27,17 +26,7 @@ struct Node
     size_t length;
     vector<size_t> children;
     
-    Node(size_t k)
-    {
-        key     = k;
-    }
-    
-    Node(size_t k, size_t p, size_t l)
-    {
-        key     = k;
-        pos     = p;
-        length  = l;
-    }
+    Node(size_t k, size_t p, size_t l) : key(k), pos(p), length(l) {}
     
     bool is_leaf() const
     {
@@ -46,11 +35,14 @@ struct Node
     
     string label(const string &text) const
     {
+        string label;
+        
         if (text.size() - length >= pos)
         {
-            return text.substr(pos, length);
+            label =  text.substr(pos, length);
         }
-        return string();
+        
+        return label;
     }
 };
 
@@ -123,7 +115,7 @@ Tree build_suffix_tree(const string &text)
     Tree tree;
     
     // add root node
-    tree.push_back(Node(0, NA, 0));
+    tree.push_back(Node(0, 0, 0));
     
     size_t pos = 0;
     
@@ -132,18 +124,17 @@ Tree build_suffix_tree(const string &text)
     {
         // start with the root and continue until we either add a new node or split
         // a current node.
-        
         Node current_node = tree[0];
         string suffix = text.substr(pos);
         bool processed = false;
-        size_t sub_pos = 0;
         bool match = false;
+        size_t suffix_pos = 0;
         
         while (!processed)
         {
             if (!match)
             {
-                sub_pos = 0;
+                suffix_pos = 0;
             }
             else
             {
@@ -155,7 +146,7 @@ Tree build_suffix_tree(const string &text)
                 cout << "\nTree:" << endl;
                 print_tree(tree, text);
                 cout << "Suffix: " << suffix << ", pos: " << pos <<
-                ", sub_pos: " << sub_pos << ", current node: ";
+                        ", suffix_pos: " << suffix_pos << ", current node: ";
                 print_node(current_node, text);
             }
             
@@ -165,6 +156,7 @@ Tree build_suffix_tree(const string &text)
                 Node child_node = tree[current_node.children[i]];
                 string label = child_node.label(text);
                 size_t k = 0;
+                
                 while (k < child_node.length && suffix[k] == label[k])
                 {
                     ++k;
@@ -178,21 +170,21 @@ Tree build_suffix_tree(const string &text)
                 }
                 
                 // Three possible cases
-                if (k == 0)   //  No match, continue
+                if (k == 0)   //  No match, move to next child
                 {
                     continue;
                 }
                 else if (k == label.length())  //  move to child node with new suffix
                 {
                     current_node = child_node;
-                    sub_pos += k;
+                    suffix_pos += k;
                     suffix.erase(0, k);
                     match = true;
                     break;
                 }
                 else    //  partial match - split current node
                 {
-                    split_node(tree, child_node.key, pos + sub_pos, k, text);
+                    split_node(tree, child_node.key, pos + suffix_pos, k, text);
                     match = true;
                     processed = true;
                     break;
@@ -201,7 +193,7 @@ Tree build_suffix_tree(const string &text)
             
             if (!match) //  Add a new node
             {
-                Node new_node(tree.size(), pos + sub_pos, text.size() - pos - sub_pos);
+                Node new_node(tree.size(), pos + suffix_pos, text.size() - pos - suffix_pos);
                 tree.push_back(new_node);
                 tree[current_node.key].children.push_back(new_node.key);
                 processed = true;
