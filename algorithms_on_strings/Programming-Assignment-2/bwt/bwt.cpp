@@ -19,12 +19,12 @@ using std::vector;
 vector<string> cyclic_rotations(const string &text)
 {
     vector<string> result(text.length());
-    result.push_back(text);
+    result[0] = text;
     size_t l = text.length();
     
     for (size_t i = 1; i < l; i++)
     {
-        result.push_back(text.substr(l - i) + text.substr(0, l - i));
+        result[i] = text.substr(l - i) + text.substr(0, l - i);
     }
     
     return result;
@@ -37,7 +37,6 @@ string BWT(const string& text)
     // create cyclic rotations and sort
     vector<string> rotations = cyclic_rotations(text);
     std::sort(rotations.begin(), rotations.end());
-    
     for (size_t i = 0; i < rotations.size(); ++i)
     {
         result += rotations[i].back();
