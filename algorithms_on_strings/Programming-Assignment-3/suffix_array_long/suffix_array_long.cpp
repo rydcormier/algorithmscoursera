@@ -47,52 +47,11 @@ size_t get_char_index(char c)
     }
 }
 
-void print_ordered_text(const string& text, const vector<int>& order)
-{
-    for (size_t i = 0; i < text.length(); ++i)
-    {
-        cout << text[order[i]];
-    }
-    
-    cout << endl;
-}
-
-void print_vector(const vector<int>& v)
-{
-    cout << "[";
-    for (size_t i = 0; i < v.size(); ++i)
-    {
-        cout << "  " << v[i];
-    }
-    
-    cout << "  ]" << endl;
-}
-
-string get_cyclic_shift(string text, size_t start, size_t length)
-{
-    while (start + length >= text.length())
-    {
-        text = text + text;
-    }
-    
-    return text.substr(start, length);
-}
-
-void print_ordered_shifts(const string& text, const vector<int>& order, size_t l)
-{
-    for (size_t i = 0; i < order.size(); ++i)
-    {
-        cout << get_cyclic_shift(text, order[i], l) << '\n';
-    }
-    
-    cout << endl;
-}
-
 // A stable sort returning indeces of texted order by the corresponding characters.
-vector<int> sort_characters(const string& text)
+vector<size_t> sort_characters(const string& text)
 {
-    vector<int> order(text.length());
-    vector<int> count(NUM_CHARS);
+    vector<size_t> order(text.length());
+    vector<size_t> count(NUM_CHARS);
     
     for (size_t i = 0; i < text.length(); ++i)
     {
@@ -104,12 +63,12 @@ vector<int> sort_characters(const string& text)
         count[j] = count[j] + count[j - 1];
     }
     
-    int i = (int) text.length();
+    size_t i = text.length();
     
     while (i > 0)
     {
         --i;
-        int c = get_char_index(text[i]);
+        size_t c = get_char_index(text[i]);
         count[c] -= 1;
         order[count[c]] = i;
     }
@@ -118,27 +77,83 @@ vector<int> sort_characters(const string& text)
 }
 
 // Returns the equivalence classes of the characters of text.
-vector<int> compute_character_classes(const string& text, const vector<int>& order)
+vector<size_t> compute_character_classes(const string& text,
+                                         const vector<size_t>& order)
 {
-    vector<int> classes(text.length());
+    vector<size_t> classes(text.length());
+    classes[order[0]] = 0;
+    size_t current_class = 0;
+    for (size_t i = 1; i < text.length(); ++i)
+    {
+        if (text[order[i]] != text[order[i - 1]])
+        {
+            ++current_class;
+        }
+        
+        classes[order[i]] =  current_class;
+    }
     
     return classes;
 }
 
 // Given the order of partial cyclic shifts, return the sorted indeces of doubled cyclic
 // shifts.
-vector<int> sort_doubled(const string& text, size_t length, const vector<int>& order, const vector<int>& classes)
+vector<size_t> sort_doubled(const string& text, size_t length,
+                            const vector<size_t>& order,
+                            const vector<size_t>& classes)
 {
-    vector<int> new_order(text.length());
+    size_t s = text.length();
+    vector<size_t> new_order(s);
+    vector<size_t> count(s, 0);
+    
+    for (size_t i = 0; i < s; ++i)
+    {
+        count[classes[i]] += 1;
+    }
+    
+    for (size_t j = 1; j < s; ++j)
+    {
+        count[j] += count[j - 1];
+    }
+    
+    size_t i = s;
+    
+    while (i > 0)
+    {
+        --i;
+        size_t start = (order[i] - length + s) % s;
+        size_t cl = classes[start];
+        count[cl] -= 1;
+        new_order[count[cl]] = start;
+    }
     
     return new_order;
 }
 
 // Update the equivalence classes of ordered cyclic shifts.
-vector<int> update_classes(const vector<int>& order, const vector<int> classes, size_t length)
+vector<size_t> update_classes(const vector<size_t>& order,
+                              const vector<size_t> classes, size_t length)
 {
     size_t n = order.size();
-    vector<int> new_classes(n);
+    vector<size_t> new_classes(n);
+    new_classes[order[0]] = 0;
+    
+    for (size_t i = 1; i < n; ++i)
+    {
+        size_t cur = order[i];
+        size_t prev = order[i - 1];
+        size_t mid = (cur + length) % n;
+        size_t mid_prev = (prev + length) % n;
+        
+        if (classes[cur] != classes[prev] || classes[mid] != classes[mid_prev])
+        {
+            new_classes[cur] = new_classes[prev] + 1;
+        }
+        else
+        {
+            new_classes[cur] = new_classes[prev];
+        }
+    }
     
     return new_classes;
 }
@@ -148,9 +163,9 @@ vector<int> update_classes(const vector<int>& order, const vector<int> classes, 
 // such that the value result[i] is the index (0-based)
 // in text where the i-th lexicographically smallest
 // suffix of text starts.
-vector<int> BuildSuffixArray(const string& text) {
-    vector<int> result = sort_characters(text);
-    vector<int> classes = compute_character_classes(text, result);
+vector<size_t> BuildSuffixArray(const string& text) {
+    vector<size_t> result = sort_characters(text);
+    vector<size_t> classes = compute_character_classes(text, result);
     size_t l = 1;
     
     while (l < text.length())
@@ -166,16 +181,11 @@ vector<int> BuildSuffixArray(const string& text) {
 int main() {
     string text;
     cin >> text;
-    //    vector<int> suffix_array = BuildSuffixArray(text);
-    //    for (int i = 0; i < suffix_array.size(); ++i) {
-    //        cout << suffix_array[i] << ' ';
-    //    }
+    vector<size_t> suffix_array = BuildSuffixArray(text);
+    for (size_t i = 0; i < suffix_array.size(); ++i) {
+        cout << suffix_array[i] << ' ';
+    }
     
-    vector<int> order = sort_characters(text);
-    print_vector(order);
-    print_ordered_text(text, order);
-    print_ordered_shifts(text, order, 2);
-    cout << endl;
     return 0;
 }
 
