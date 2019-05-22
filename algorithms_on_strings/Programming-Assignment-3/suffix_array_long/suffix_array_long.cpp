@@ -162,18 +162,18 @@ vector<size_t> update_classes(const vector<size_t>& order,
 // suffix of text starts.
 vector<size_t> BuildSuffixArray(const string& text)
 {
-    vector<size_t> result = sort_characters(text);
+    vector<size_t> order = sort_characters(text);
     vector<size_t> classes = compute_character_classes(text, result);
     size_t l = 1;
 
     while (l < text.length())
     {
-        result = sort_doubled(text, l, result, classes);
-        classes = update_classes(result, classes, l);
+        result = sort_doubled(text, l, order, classes);
+        classes = update_classes(order, classes, l);
         l = 2 * l;
     }
 
-    return result;
+    return order;
 }
 
 int main()
