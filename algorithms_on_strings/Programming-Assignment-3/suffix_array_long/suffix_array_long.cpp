@@ -5,17 +5,13 @@
 //  Created by Ryan Cormier on 5/18/19.
 //
 
-#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <utility>
 
 using std::cin;
 using std::cout;
 using std::endl;
-using std::make_pair;
-using std::pair;
 using std::string;
 using std::vector;
 
