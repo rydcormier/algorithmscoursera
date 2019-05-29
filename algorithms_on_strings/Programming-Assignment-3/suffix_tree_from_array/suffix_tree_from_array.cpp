@@ -247,7 +247,7 @@ int main()
             stack.push_back(make_pair(node, edge_index + 1));
         }
         
-        printf("%d %d : ", edges[edge_index].start, edges[edge_index].end);
+        printf("%d %d\n", edges[edge_index].start, edges[edge_index].end);
         stack.push_back(make_pair(edges[edge_index].node, 0));
     }
     
