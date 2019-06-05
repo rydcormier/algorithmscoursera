@@ -7,9 +7,10 @@
 
 #include <algorithm>
 #include <iostream>
-#include <string>
+#include <queue>
 #include <vector>
 
+using std::queue;
 using std::vector;
 
 /*
@@ -75,10 +76,11 @@ public:
     void add_flow(size_t id, int flow)
     {
         /*
-         * To get a backward edge for a true forward edge (i.e id is even), we should
-         * get id + 1 due to the described above scheme. On the other hand, when we have
-         * to get a "backward" edge for a backward edge (i.e. get a forward edge
-         * for backward - id is odd), id - 1 should be taken.
+         * To get a backward edge for a true forward edge (i.e id is even), we 
+         * should get id + 1 due to the described above scheme. On the other 
+         * hand, when we have to get a "backward" edge for a backward edge 
+         * (i.e. get a forward edge for backward - id is odd), id - 1 should
+         * be taken.
          *
          * It turns out that id ^ 1 works for both cases. Think this through!
          */
@@ -108,13 +110,57 @@ FlowGraph read_data()
 vector<size_t> find_shortest_path(const FlowGraph& graph, int from, int to)
 {
     /* Return a list of vertex ids for the shortest path of from to to. */
-    
     vector<size_t> path;
+    vector<bool> found(graph.size(), false);
+    vector<size_t> prev(graph.size());
+    queue<int> q;
     
-    // TODO
+    // start at source and use BFS
+    int current_node = from;
+    found[current_node] = true;
+    q.push(current_node);
+    
+    while (!q.empty() && !found[to])
+    {
+        current_node = q.front(); q.pop();
+        
+        vector<size_t> edge_ids = graph.get_ids(current_node);
+        
+        // check each edge from current node;
+        for (vector<size_t>::iterator id = edge_ids.begin();
+             id != edge_ids.end(); ++id)
+        {
+            FlowGraph::Edge e = graph.get_edge(*id);
+            
+            if (!found[e.to] && e.flow < e.capacity)
+            {
+                // add end node
+                q.push(e.to);
+                found[e.to] = true;
+                prev[e.to] = *id;
+            }
+            
+            if (e.to == to)
+                break;
+        }
+    }
+    
+    if (found[to])  // a path exists
+    {
+        size_t node = to;
+        
+        while (node != from)
+        {
+            path.push_back(prev[node]);
+            node = graph.get_edge(prev[node]).from;
+        }
+        
+        std::reverse(path.begin(), path.end());
+    }
     
     return path;
 }
+
 
 int max_flow(FlowGraph& graph, int from, int to)
 {
@@ -125,9 +171,10 @@ int max_flow(FlowGraph& graph, int from, int to)
     while (!path.empty())
     {
         int min_capacity = 10000; // the maximum allowable capacity
-        for (vector<size_t>::iterator it = path.begin(); it != path.end(); ++it)
+        for (size_t i = 0; i < path.size(); ++i)
         {
-            min_capacity = std::min(min_capacity, graph.get_edge(*it).capacity);
+            FlowGraph::Edge e = graph.get_edge(path[i]);
+            min_capacity = std::min(min_capacity, e.capacity);
         }
         
         for (vector<size_t>::iterator it = path.begin(); it != path.end(); ++it)
