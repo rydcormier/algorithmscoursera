@@ -87,7 +87,6 @@ public:
         edges[id].flow += flow;
         edges[id ^ 1].flow -= flow;
     }
-    
 };
 
 FlowGraph read_data()
@@ -130,6 +129,7 @@ vector<size_t> find_shortest_path(const FlowGraph& graph, int from, int to)
         for (vector<size_t>::iterator id = edge_ids.begin();
              id != edge_ids.end(); ++id)
         {
+            
             FlowGraph::Edge e = graph.get_edge(*id);
             
             if (!found[e.to] && e.flow < e.capacity)
@@ -138,10 +138,10 @@ vector<size_t> find_shortest_path(const FlowGraph& graph, int from, int to)
                 q.push(e.to);
                 found[e.to] = true;
                 prev[e.to] = *id;
+                
+                if (e.to == to)
+                    break;
             }
-            
-            if (e.to == to)
-                break;
         }
     }
     
@@ -167,14 +167,14 @@ int max_flow(FlowGraph& graph, int from, int to)
     int flow = 0;
     
     vector<size_t> path = find_shortest_path(graph, from, to);
-    
+
     while (!path.empty())
     {
         int min_capacity = 10000; // the maximum allowable capacity
         for (size_t i = 0; i < path.size(); ++i)
         {
             FlowGraph::Edge e = graph.get_edge(path[i]);
-            min_capacity = std::min(min_capacity, e.capacity);
+            min_capacity = std::min(min_capacity, e.capacity - e.flow);
         }
         
         for (vector<size_t>::iterator it = path.begin(); it != path.end(); ++it)
