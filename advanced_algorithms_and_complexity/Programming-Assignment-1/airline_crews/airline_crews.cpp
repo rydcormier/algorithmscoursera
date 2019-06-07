@@ -168,7 +168,7 @@ private:
             }
         }
         
-        /* connect the last m nodes to the sink. */
+        // connect the last m nodes to the sink.
         for (int j = n + 1; j < sink; ++j)
         {
             graph.add_edge(j, sink, 1);
@@ -234,29 +234,6 @@ private:
         
     }
     
-    vector<int> FindMatchingNaive(const vector<vector<bool>>& adj_matrix)
-    {
-        /* Replace this code with an algorithm that finds the maximum
-         matching correctly in all cases. */
-        int num_left = (int) adj_matrix.size();
-        int num_right = (int) adj_matrix[0].size();
-        vector<int> matching(num_left, -1);
-        vector<bool> busy_right(num_right, false);
-        
-        for (int i = 0; i < num_left; ++i)
-        {
-            for (int j = 0; j < num_right; ++j)
-            {
-                if (matching[i] == -1 && !busy_right[j] && adj_matrix[i][j])
-                {
-                    matching[i] = j;
-                    busy_right[j] = true;
-                }
-            }
-        }
-        return matching;
-    }
-    
     vector<int> FindMatching(const vector<vector<bool>>& adj_matrix)
     {
         int n = (int) adj_matrix.size();
@@ -302,9 +279,6 @@ private:
         return matching;
     }
 };
-
-
-
 
 int main()
 {
