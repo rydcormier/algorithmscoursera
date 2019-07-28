@@ -15,14 +15,15 @@ typedef std::vector<double> Vector;
 typedef std::vector<Vector> Matrix;
 typedef std::vector<size_t> Permutation;
 
-struct Equation {
+struct Equation
+{
     Equation(const Matrix &a, const Vector &b):
     a(a),
     b(b)
     {}
     
     Matrix a;
-    Column b;
+    Vector b;
 };
 
 Equation ReadEquation() {
