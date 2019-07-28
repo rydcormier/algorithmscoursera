@@ -1,9 +1,8 @@
 // energy_values.cpp
 //
 // Advanced Algorithms and Complexity - Programming Assignment 2
-// Created by Ryan Cormier <rydcormier@gmail.com> on June 14, 2019.
+// Created by Ryan Cormier <rydcormier@gmail.com> on July 14, 2019.
 //
-
 
 #include <cmath>
 #include <iostream>
@@ -12,127 +11,128 @@
 const double EPS = 1e-6;
 const int PRECISION = 20;
 
-typedef std::vector<double> Column;
-typedef std::vector<double> Row;
-typedef std::vector<Row> Matrix;
+typedef std::vector<double> Vector;
+typedef std::vector<Vector> Matrix;
+typedef std::vector<size_t> Permutation;
 
-void PrintSolution(const Matrix& a)
+struct Equation {
+    Equation(const Matrix &a, const Vector &b):
+    a(a),
+    b(b)
+    {}
+    
+    Matrix a;
+    Column b;
+};
+
+Equation ReadEquation() {
+    size_t size;
+    std::cin >> size;
+    Matrix a(size, Vector(size, 0.0));
+    Vector b(size, 0.0);
+    
+    for (size_t row = 0; row < size; ++row)
+    {
+        for (size_t column = 0; column < size; ++column)
+            std::cin >> a[row][column];
+        
+        std::cin >> b[row];
+    }
+    
+    return Equation(a, b);
+}
+
+Permutation LUPDecomposition(Matrix& A)
 {
-    size_t n = a.size();
+    // Decomposes A, storing L and U in place in the matrix A, and returns
+    // the permutation matrix P as a vector of position indexes.
+    
+    size_t n = A.size();
+    Permutation P(n);
+    
+    for (size_t i = 0; i < n; i++)
+        P[i] = i;
+    
+    for (size_t k = 0; k < n; k++)
+    {
+        // find pivot
+        double pmax = 0;
+        size_t pidx = k;
+        for (size_t i = k; i < n; i++)
+        {
+            if (std::fabs(A[i][k]) > pmax)
+            {
+                pmax = std::fabs(A[i][k]);
+                pidx = i;
+            }
+        }
+        
+        if (pmax == 0)  // singular matrix
+            return Permutation();
+        
+        // swap rows
+        std::swap(P[k], P[pidx]);
+        std::swap(A[k], A[pidx]);
+        
+        // update A
+        for (size_t i = k + 1; i < n; i++)
+        {
+            A[i][k] = (A[i][k] / A[k][k]);
+            
+            for (size_t j = k + 1; j < n; j++)
+                A[i][j] = A[i][j] - (A[i][k]*A[k][j]);
+        }
+    }
+    return P;
+}
+
+Vector LUPSolve(Matrix& A, const Vector& b)
+{
+    // Computes the LUP decomposition of A and then solves the system of
+    // linear equations using forward and back substitution.
+    
+    size_t n = A.size();
+    Vector x(n), y(n);
+    
+    Permutation P = LUPDecomposition(A);  //  L and U computed in A
+    
+    // Forward Substitution
+    for (size_t i = 0; i < n; i ++)
+    {
+        double sum = 0;
+        for (size_t j = 0; j < i; j++)
+            sum += (A[i][j] * y[j]);
+        
+        y[i] = b[P[i]] - sum;
+    }
+    
+    // Back Substitution
+    for (int i = (int) n - 1; i >= 0; i--)
+    {
+        double sum = 0;
+        for (size_t j = i + 1; j < n; j++)
+            sum += (A[i][j] * x[j]);
+        
+        x[i] = (y[i] - sum) / A[i][i];
+    }
+    
+    return x;
+}
+
+void PrintVector(const Vector &column)
+{
+    size_t size = column.size();
     std::cout.precision(PRECISION);
     
-    for (size_t i = 0; i  < n; ++i)
-    {
-        std::cout << a[i][n] << std::endl;
-    }
-}
-
-Matrix ReadInput()
-{
-    int size;
-    std::cin >> size;
-    Matrix a(size, std::vector <double> (size + 1, 0.0));
-    
-    for (int row = 0; row < size; ++row)
-    {
-        for (int column = 0; column <= size; ++column)
-            std::cin >> a[row][column];
-    }
-    
-    return a;
-}
-
-int ForwardReduction(Matrix& a)
-{
-    size_t n = a.size();
-    for (size_t col = 0; col < n; ++col)
-    {
-        // Find the element in column with largest amplitude
-        size_t r_max = col;
-        double v_max = a[r_max][col];
-        
-        for (size_t row = col + 1; row < n; ++row)
-        {
-            if (std::fabs(a[row][col]) > v_max)
-            {
-                v_max = a[row][col];
-                r_max = row;
-            }
-        }
-        
-        // If the element is not on the diagonal, swap rows.
-        if (r_max != col)
-            std::swap(a[col], a[r_max]);
-        
-        size_t row = col;
-        
-        // Rescale row
-        if (a[row][col] != 1)
-        {
-            double val = a[row][col];
-            a[row][col] = 1;
-            
-            for (size_t c = col + 1; c <= n; ++c)
-            {
-                a[row][c] *= (1 / val);
-            }
-        }
-        
-        // fill the rest of the column with zeros.
-        for (size_t r = row + 1; r < n; ++r)
-        {
-            if (a[r][col] != 0)
-            {
-                double scalar = a[r][col];
-                a[r][col] = 0;
-                
-                for (size_t c = col + 1; c <= n; ++c)
-                {
-                    a[r][c] -= (scalar * a[row][c]);
-                }
-            }
-        }
-    }
-    
-    // This is only for systems with a single solution.
-    return 0;
-}
-
-void BackwardReduction(Matrix& a)
-{
-    int n = (int) a.size();
-    
-    // Start from bottom right fill the rest of the column with zeros
-    for (int col = n - 1; col > 0; --col)
-    {
-        for (int row = col - 1; row >= 0; --row)
-        {
-            if (a[row][col] != 0)
-            {
-                double scalar = a[row][col];
-                a[row][col] = 0;
-                a[row][n] -= (scalar * a[col][n]);
-            }
-        }
-    }
-}
-
-void Solve(Matrix& a)
-{
-    // reduce to REF
-    int flag = ForwardReduction(a);
-    
-    if (flag != 0)
-        return;
-    
-    // reduce to RREF
-    BackwardReduction(a);
+    for (size_t row = 0; row < size; ++row)
+        std::cout << column[row] << std::endl;
 }
 
 int main()
 {
-    Matrix a = ReadInput();
-    Solve(a);
-    PrintSolution(a);
+    Equation equation = ReadEquation();
+    Vector solution = LUPSolve(equation.a, equation.b);
+    PrintVector(solution);
+    
     return 0;
 }
