@@ -13,7 +13,7 @@
 
 using namespace std;
 
-static bool TESTING = true;
+static bool TESTING = false;
 
 struct Edge {
     int from;
@@ -25,10 +25,12 @@ typedef vector< vector<int>> NonAdjacencyList;
 struct ConvertHampathToSat {
     int numVertices;
     //vector<Edge> edges;
+    int numEdges;
     NonAdjacencyList naList;
 
-    ConvertHampathToSat(int n, const vector<Edge>& edges) :
+    ConvertHampathToSat(int n, int m, const vector<Edge>& edges) :
         numVertices(n),
+        numEdges(m),
         naList(n + 1)
     {
         vector<vector<bool>> nonadjacent(n + 1, vector<bool>(n + 1, true));
@@ -55,7 +57,7 @@ struct ConvertHampathToSat {
         return (((x - 1) * numVertices) + y);
     }
 
-    void printEquisatisfiableSatFormula() {
+    vector<vector<int>> getEquisatisfiableSatFormula() {
         // For the SAT formula, create a variable for each vertex for each
         // position in the path: x_i_j | 1 <= i, j <= n.  These variables are
         // subject to the following constraints:
@@ -67,6 +69,11 @@ struct ConvertHampathToSat {
         //          edge.
         
         vector< vector<int>> formula;   // formula in cnf form.
+        
+        // sanity check: there must be at least n - 1 edges
+        if (numEdges + 1 < numVertices) {
+            return formula;
+        }
         
         // Add Clauses
         // Constraint 1: (x_v_1 V x_v_2 V ... V x_v_n) | 1 <= v <= n
@@ -104,9 +111,12 @@ struct ConvertHampathToSat {
         }
         
         // Constraint 4: (-x_u_i V -x_v_i) | 1 <= i <= n & 1 <= u < v <= n
-        for (int i = 0; i <= numVertices; i++) {
+        for (int i = 1; i <= numVertices; i++) {
+            
             for (int u = 1; u < numVertices; u++) {
-                for (int v = u + 1; u <= numVertices; v++) {
+                
+                for (int v = u + 1; v <= numVertices; v++) {
+                    
                     int iu_idx = convertIndex(i, u);
                     int iv_idx = convertIndex(i, v);
                     formula.push_back({-iu_idx, -iv_idx});
@@ -127,21 +137,35 @@ struct ConvertHampathToSat {
                 }
             }
         }
-        int n = numVertices ^ 2;    // number of variables
+        
+        return formula;
+    }
+    
+    void printEquisatisfiableSatFormula() {
+        vector<vector<int>> formula = getEquisatisfiableSatFormula();
+        
+        int n = (numVertices * numVertices);    // number of variables
         int c = (int) formula.size();     // number of clauses
+        
+        // if c == 0, a sanity check failed. return something unsatisfiable.
+        if (c == 0) {
+            n = 1;
+            c = 2;
+            formula = {{1}, {-1}};
+        }
         
         // print out formula
         if (TESTING) {      // dimacs
-            cout << "p " << n << " " << c << endl;
+            cout << "p cnf " << n << " " << c << endl;
         } else {
             cout << c << " " << n << endl;
         }
         
         for (int i = 0; i < c; i++) {
             vector<int> clause = formula[i];
-            cout << (i > 0 ? " " : "");
             
             for (int j = 0; j < clause.size(); j++) {
+                cout << (j > 0 ? " " : "");
                 cout << clause[j];
             }
             
@@ -161,7 +185,7 @@ int main() {
         cin >> edges[i].from >> edges[i].to;
     }
     
-    ConvertHampathToSat converter(n, edges);
+    ConvertHampathToSat converter(n, m, edges);
 
     converter.printEquisatisfiableSatFormula();
 
