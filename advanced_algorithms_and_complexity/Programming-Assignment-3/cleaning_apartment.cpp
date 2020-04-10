@@ -58,9 +58,10 @@ struct ConvertHampathToSat {
     }
 
     vector<vector<int>> getEquisatisfiableSatFormula() {
-        // For the SAT formula, create a variable for each vertex for each
-        // position in the path: x_i_j | 1 <= i, j <= n.  These variables are
-        // subject to the following constraints:
+        // Reduce Hamiltonian Cycle problem to SAT. For the SAT formula,
+        // create a variable for each vertex for each position in the path:
+        //      x_i_j | 1 <= i, j <= n.
+        // These variables are subject to the following constraints:
         //      1) Each vertex belongs to a path.
         //      2) Each vertex appears just once in a path.
         //      3) Each position in a path is occupied by some vertex.
