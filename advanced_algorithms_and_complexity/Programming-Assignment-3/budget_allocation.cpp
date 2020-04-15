@@ -89,7 +89,6 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
         for (int j = 1; j <= n; j++) {
             if (a[j] != 0) {
                 nonzero_values.push_back(a[j]);
-//                nonzero_indeces.push_back((i - 1) * n + j);
                 nonzero_indeces.push_back(j);
             }
         }
