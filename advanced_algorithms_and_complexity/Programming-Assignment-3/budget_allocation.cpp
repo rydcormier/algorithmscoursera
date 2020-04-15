@@ -16,7 +16,7 @@ using namespace std;
 typedef vector<int> Vector;
 typedef vector<Vector> Matrix;
 
-const bool TESTING = true;
+const bool TESTING = false;
 
 const vector<Matrix> Binary_Combinations = {
     {{}},
