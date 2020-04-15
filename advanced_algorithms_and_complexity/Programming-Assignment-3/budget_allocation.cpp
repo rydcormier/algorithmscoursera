@@ -16,7 +16,7 @@ using namespace std;
 typedef vector<int> Vector;
 typedef vector<Vector> Matrix;
 
-const bool TESTING = false;
+const bool TESTING = true;
 
 const vector<Matrix> Binary_Combinations = {
     {{}},
@@ -93,6 +93,11 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
             }
         }
         size_t k = nonzero_indeces.size();
+        // sanity check
+        if (k == 0 && b[i] < 0) {
+            // unsatisfiable
+            formula = {{1}, {-1}};
+        }
         Matrix binary_combos = Binary_Combinations[k];
         
         for (size_t l = 0; l < binary_combos.size(); l++) {
@@ -104,6 +109,11 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
                                                  nonzero_indeces));
             }
         }
+    }
+    
+    // if formula is empty, then there were no violations, and it is satisfiable.
+    if (formula.empty()) {
+        formula.push_back({1, -1});
     }
     
     return formula;
