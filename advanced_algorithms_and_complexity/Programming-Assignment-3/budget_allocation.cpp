@@ -86,7 +86,9 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
         Vector a = A[i];
         Vector nonzero_values, nonzero_indeces;
         
-        for (int j = 1; j <= n; j++) {
+        for (int j = 1; j < a.size(); j++) {
+            if (nonzero_values.size() == 3)
+                break;
             if (a[j] != 0) {
                 nonzero_values.push_back(a[j]);
                 nonzero_indeces.push_back(j);
@@ -95,8 +97,7 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
         size_t k = nonzero_indeces.size();
         // sanity check
         if (k == 0 && b[i] < 0) {
-            // unsatisfiable
-            formula = {{1}, {-1}};
+            return {{1}, {-1}};
         }
         Matrix binary_combos = Binary_Combinations[k];
         
