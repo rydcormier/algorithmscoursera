@@ -1,74 +1,89 @@
+//  plan_party.cpp
+//
+//  Advanced Algorithms and Complexity
+//  Programming Assignment 4: Problem 2
+//
+//  Created by Ryan Cormier on 4/29/20.
+//
+
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
-struct Vertex {
-    int weight;
-    std::vector <int> children;
-};
-typedef std::vector<Vertex> Graph;
-typedef std::vector<int> Sum;
+using namespace std;
 
-Graph ReadTree() {
-    int vertices_count;
-    std::cin >> vertices_count;
-
-    Graph tree(vertices_count);
-
-    for (int i = 0; i < vertices_count; ++i)
-        std::cin >> tree[i].weight;
-
-    for (int i = 1; i < vertices_count; ++i) {
-        int from, to, weight;
-        std::cin >> from >> to;
-        tree[from - 1].children.push_back(to - 1);
-        tree[to - 1].children.push_back(from - 1);
+// store the tree as an undirected graph
+struct Graph {
+    int V;
+    vector< vector<int>> adj;
+    vector<int> weights;
+    
+    Graph(int n) : V(n), adj(n + 1), weights(n + 1) {}
+    
+    void add_edge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
     }
+};
 
-    return tree;
-}
-
-void dfs(const Graph &tree, int vertex, int parent) {
-    for (int child : tree[vertex].children)
-        if (child != parent)
-            dfs(tree, child, vertex);
-
-    // This is a template function for processing a tree using depth-first search.
-    // Write your code here.
-    // You may need to add more parameters to this function for child processing.
-}
-
-int MaxWeightIndependentTreeSubset(const Graph &tree) {
-    size_t size = tree.size();
-    if (size == 0)
-        return 0;
-    dfs(tree, 0, -1);
-    // You must decide what to return.
-    return 0;
+// Recursive function to find an optimized weighted independent set on a tree.
+int max_weighted_ind_set(Graph &T, vector<int> &D, vector<bool> &on_stack, int u) {
+    if (D[u] < 0) {
+        vector<int> children;
+        for (int i = 0; i < T.adj[u].size(); i++) {
+            int v = T.adj[u][i];
+            if (! on_stack[v])
+                children.push_back(v);
+        }
+        if (children.empty()) {     // leaf
+            D[u] = T.weights[u];
+        } else {
+            on_stack[u] = true;
+            
+            int m1 = T.weights[u]; // add u and grandchildren
+            for (int i = 0; i < children.size(); i++) {
+                int v = children[i];
+                on_stack[v] = true;
+                for (int j = 0; j < T.adj[v].size(); j++) {
+                    int w = T.adj[v][j];
+                    if (! on_stack[w])
+                        m1 += max_weighted_ind_set(T, D, on_stack, w);
+                }
+                on_stack[v] = false;
+            }
+            
+            int m0 = 0; // skip u and add children
+            for (int i = 0; i < children.size(); i++) {
+                m0 += max_weighted_ind_set(T, D, on_stack, children[i]);
+            }
+            on_stack[u] = false;
+            D[u] = max(m1, m0);
+        }
+    }
+    return D[u];
 }
 
 int main() {
-    // This code is here to increase the stack size to avoid stack overflow
-    // in depth-first search.
-    const rlim_t kStackSize = 64L * 1024L * 1024L;  // min stack size = 64 Mb
-    struct rlimit rl;
-    int result;
-    result = getrlimit(RLIMIT_STACK, &rl);
-    if (result == 0)
-    {
-        if (rl.rlim_cur < kStackSize)
-        {
-            rl.rlim_cur = kStackSize;
-            result = setrlimit(RLIMIT_STACK, &rl);
-            if (result != 0)
-            {
-                fprintf(stderr, "setrlimit returned result = %d\n", result);
-            }
-        }
+    int n, u, v;
+    cin >> n;
+    
+    Graph T(n);
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> T.weights[i];
     }
-
-    // Here begins the solution
-    Graph tree = ReadTree();
-    int weight = MaxWeightIndependentTreeSubset(tree);
-    std::cout << weight << std::endl;
-    return 0;
+    
+    for (int i = 1; i < n; i++) {
+        cin >> u >> v;
+        T.add_edge(u, v);
+    }
+    
+    int opt = 0;
+    vector<int> D(n + 1, -1);
+    vector<bool> on_stack(n + 1, false);
+    for (int i = 1; i <= n; i++) {
+        opt = max(opt, max_weighted_ind_set(T, D, on_stack, i));
+    }
+    
+    cout << opt << endl;
 }
