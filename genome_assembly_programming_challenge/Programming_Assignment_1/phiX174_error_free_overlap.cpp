@@ -1,134 +1,282 @@
 //
 //  phiX174_error_free_overlap.cpp
-//  Genome Assembly Programming Challenge - Programming Assignment 1
 //
-//  Created by Ryan Cormier on 5/10/20.
+//  Assembles a phiX174 phage virus genome from the given reads.
 //
-
+//  Created by Ryan Cormier on 5/15/20.
+//
 #include <algorithm>
+#include <map>
 #include <iostream>
 #include <string>
 #include <vector>
 
 using namespace std;
 
-const int NUM_READS = 1168;
-const int READ_SIZE = 100;
+const size_t NUM_READS = 1168;
+const size_t READ_SIZE = 100;
 
-typedef vector< vector<int>> Graph;
+struct PrefixTreeNode
+{
+    size_t l_bound = 0;
+    size_t u_bound = 0;
+    size_t chain_len = 0;
+    std::map<char, size_t> branches;
+};
 
-// Find maximum n such that the last n characters of a and the first n
-// characters of b are the same.
-int overlap(const string &a, const string &b) {
-    int n = (int) b.size();
-    for (int i = 1; i < n; i++) {
-        if (a.substr(i) == b.substr(0, n - i))
-            return n - i;
+// Modified b-tree as a compact prefix tree.
+// See https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4417569/
+struct PrefixTree
+{
+    std::vector<PrefixTreeNode> nodes;
+    
+    PrefixTree(const std::vector<std::string>&);
+    PrefixTreeNode operator [](size_t i) { return nodes[i]; }
+};
+
+// Uses read strings as nodes and weighted edges representing the overlap
+// between two reads.
+struct OverlapGraph
+{
+    std::vector< std::vector<size_t>> adj;
+    std::vector< std::vector<size_t>> weights;
+    
+    OverlapGraph(size_t n) : adj(n), weights(n, std::vector<size_t>(n, 0)) {}
+    OverlapGraph(const std::vector<std::string>&);
+    void initialize(const std::vector<std::string>&, PrefixTree&);
+    void print();
+    size_t size() { return adj.size(); }
+};
+
+// DFS to find a hamiltonian path.
+vector<size_t> hamiltonian_path(OverlapGraph&);
+
+int main()
+{
+    vector<string> G(NUM_READS);
+    
+    for (size_t i = 0; i < NUM_READS; i++)
+        cin >> G[i];
+    
+    OverlapGraph g(G);
+    
+    vector<size_t> path = hamiltonian_path(g);
+    
+    size_t u, v, l;
+    
+    for (size_t i = 0; i < path.size(); i++)
+    {
+        u = path[i];
+        v = (i < (path.size() - 1) ? path[i + 1] : path[0]);
+        l = READ_SIZE - g.weights[u][v];
+        
+        cout << G[u].substr(0, l);
     }
+    
+    cout << endl;
+    
     return 0;
 }
 
-// Returns true if a and b share a substring of size k, false otherwise.
-bool share_kmer(const string &a, const string &b, int k) {
-    int n = (int) a.size();
+PrefixTree::PrefixTree(const vector<string> &G)
+{
+    PrefixTreeNode root;
+    nodes.push_back(root);
     
-    for (int i = 0; i <= n - k; i++) {
-        if (b.find(a.substr(i, k)) != string::npos)
-            return true;
-    }
-    
-    return false;
-}
-
-// Create an overlap graph from the given reads.
-Graph overlap_graph(const vector<string> &reads) {
-    Graph G(reads.size(), vector<int>(reads.size(), 0));
-    
-    // first only find overlaps for pairs of reads that share a 12-mer
-    vector< pair<int, int>> pairs;
-    
-    for (int i = 0; i < NUM_READS - 1; i++) {
-        for (int j = i + 1; j < NUM_READS; j++) {
-            if (share_kmer(reads[i], reads[j], 12)) {
-                pairs.push_back(make_pair(i, j));
+    for (size_t i = 0; i < G.size(); i++)
+    {
+        string S(G[i]);
+        size_t j = 0;
+        size_t local_position = 1;
+        size_t node = 0;
+        size_t path_len = 0;
+        
+        while (j < S.size())
+        {
+            char c = S[j];
+            
+            if (nodes[node].chain_len >= local_position) // still w/in node
+            {
+                if (c == G[nodes[node].l_bound][j]) // match: keep going
+                {
+                    local_position++;
+                    path_len++;
+                    j++;
+                }
+                else    // split node
+                {
+                    PrefixTreeNode n2, n3;
+                    
+                    n2.chain_len = nodes[node].chain_len - local_position;
+                    n2.l_bound = nodes[node].l_bound;
+                    n2.u_bound = nodes[node].u_bound - 1;
+                    size_t n2_id = nodes.size();
+                    char n2_char = G[nodes[node].l_bound][j];
+                    
+                    n3.chain_len = S.size() - (path_len + 1);
+                    n3.l_bound = i;
+                    n3.u_bound = i;
+                    size_t n3_id = n2_id + 1;
+                    
+                    nodes[node].chain_len = local_position - 1;
+                    nodes[node].branches[n2_char] = n2_id;
+                    nodes[node].branches[c] = n3_id;
+                    
+                    nodes.push_back(n2);
+                    nodes.push_back(n3);
+                    
+                    break;
+                }
+            }
+            else        // look for the next node or create one if needed.
+            {
+                map<char, size_t>::iterator b = nodes[node].branches.find(c);
+                
+                if (b != nodes[node].branches.end())
+                {
+                    node = b->second;
+                    local_position = 1;
+                    path_len++;
+                    nodes[node].u_bound = i;
+                    j++;
+                }
+                else
+                {
+                    PrefixTreeNode n;
+                    n.l_bound = i;
+                    n.u_bound = i;
+                    n.chain_len = S.size() - (path_len + 1);
+                    
+                    nodes[node].branches[c] = nodes.size();
+                    nodes.push_back(n);
+                    
+                    break;
+                }
             }
         }
     }
-    
-    // connect pairs of vertices with edge weight equal to overlap
-    for (int i = 0; i < pairs.size(); i++) {
-        int u = pairs[i].first;
-        int v = pairs[i].second;
-        
-        G[u][v] = overlap(reads[u], reads[v]);
-        G[v][u] = overlap(reads[v], reads[u]);
-    }
-    
-    return G;
 }
 
-// Recursive DFS like search looking for a hamiltonian path in G.
-void visit(const Graph &G, int u, vector<bool> &visited, vector<int> &path) {
+OverlapGraph::OverlapGraph(const vector<string> &G)
+{
+    adj.resize(G.size());
+    weights.resize(G.size(), vector<size_t>(G.size(), 0));
+    
+    PrefixTree T(G);
+    
+    for (size_t i = 0; i < G.size(); i++)
+    {
+        string S(G[i]);
+        size_t j = 1;
+        
+        while (j < S.size())
+        {
+            size_t v = j;   // current position in S
+            size_t local_positon = 1;   // current position in Node
+            size_t path_len = 0;    // Overall length if current match
+            PrefixTreeNode node = T[0];
+            while (true)
+            {
+                if (v == S.size())
+                {
+                    // any string index in the current nodes interval is
+                    // a match from j.
+                    for (size_t z = node.l_bound; z <= node.u_bound; z++)
+                    {
+                        if (weights[i][z] == 0 && i != z)
+                        {
+                            weights[i][z] = S.size() - j;
+                            adj[i].push_back(z);
+                        }
+                    }
+                    
+                    break;
+                }
+                
+                char g1 = S[v];
+                
+                if (node.chain_len >= local_positon) // still in node
+                {
+                    char g2 = G[node.l_bound][path_len];
+                    
+                    if (g1 == g2)
+                    {
+                        local_positon++;
+                        path_len++;
+                        v++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else    // end of node. find next or quit.
+                {
+                    map<char, size_t>::iterator b = node.branches.find(g1);
+                    
+                    if (b != node.branches.end())
+                    {
+                        node = T[b->second];
+                        local_positon = 1;
+                        path_len++;
+                        v++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            
+            j++;
+        }
+    }
+    // sort by decreasing weight. Should speed up any DFS
+    for (size_t i = 0; i < adj.size(); i++)
+    {
+        sort(adj[i].begin(),
+             adj[i].end(),
+             [&, i](const size_t a, const size_t b) -> bool { return weights[i][a] > weights[i][b]; });
+    }
+}
+
+// Recusive call for DFS finding hamiltonian path
+void visit(OverlapGraph &g, size_t u, vector<bool> &visited, vector<size_t> &path)
+{
     visited[u] = 1;
     path.push_back(u);
-    if (path.size() == NUM_READS)   // we're done
+    
+    if (path.size() == g.size())
         return;
-    vector<pair<int, int>> outgoing_edges;  // store {weight, vertex} pairs
-    for (int i = 0; i < NUM_READS; i++) {
-        if (G[u][i] > 0)
-            outgoing_edges.push_back(make_pair(G[u][i], i));
-    }
-    sort(outgoing_edges.begin(), outgoing_edges.end());
-    reverse(outgoing_edges.begin(), outgoing_edges.end()); // now sorted by
-                                                           // decreasing weight.
-    for (vector< pair<int, int>>::iterator e = outgoing_edges.begin();
-         e != outgoing_edges.end(); e++) {
-        if (path.size() != NUM_READS && ! visited[e->second])
-            visit(G, e->second, visited, path);
+    
+    for (size_t i = 0; i < g.adj[u].size(); i++)
+    {
+        size_t v = g.adj[u][i];
+        if (! visited[v])
+            visit(g, v, visited, path);
     }
     
-    if (path.size() != NUM_READS)   // reached a dead end => backtrack
+    if (path.size() != g.size()) {
         path.pop_back();
+        visited[u] = 0;
+    }
+    
 }
 
-// Returns a sequence of vertcices corresponding to a hamiltonian path on G.
-vector<int> find_path(const Graph &G) {
-    vector<int> path;
+vector<size_t> hamiltonian_path(OverlapGraph &g)
+{
+    vector<size_t> path;
     
-    for (int i = 0; i < NUM_READS; i++) {
-        if (path.size() == NUM_READS)
+    for (size_t u = 0; u < g.size(); u++)
+    {
+        if (path.size() == g.size())
             break;
-        path.clear();
-        vector<bool> visited(NUM_READS, 0);
-        visit(G, i, visited, path);
-    }
-    return path;
-}
-
-int main() {
-    vector<string> reads(NUM_READS);
-    
-    for (int i = 0; i < NUM_READS; i++) {
-        cin >> reads[i];
-    }
-    
-    Graph g = overlap_graph(reads);
-    
-    vector<int> path = find_path(g);
-    int u, v, w;
-    for (int i = 0; i < NUM_READS - 1; i++) {
-        u = path[i];
-        v = path[i + 1];
-        w = g[u][v];
         
-        cout << reads[path[i]].substr(0, READ_SIZE - w);
+        path.clear();
+        vector<bool> visited(g.size(), 0);
+        visit(g, u, visited, path);
+        u++;
     }
     
-    u = path.back();
-    v = path.front();
-    w = g[u][v];
-    
-    cout << reads[u].substr(0, READ_SIZE - w) << endl;
-    
-    return 0;
+    return path;
 }
