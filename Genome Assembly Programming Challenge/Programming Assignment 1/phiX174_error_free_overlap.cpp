@@ -3,9 +3,15 @@
 //
 //  Created by Ryan Cormier on 6/16/20.
 //
-#include <ctime>
-#include <cstdio>
-#include <fstream>
+//  This program reassembles the phi X174 genome from a set of simulated
+//  error free reads. First, a suffix tree is constructed and used to 
+//  solve the All Pairs Suffix Prefix problem, thus calculating
+//  the weights of all the edges in the overlap graph. A simple greedy
+//  strategy is then used. Start with the maximum waited edge and succesively
+//  move along the next available edge with maximum weight.  When done, 
+//  we have a Hamilton path and can reassemble the genome.
+//
+
 #include <iostream>
 #include <set>
 #include <stack>
@@ -15,9 +21,6 @@
 using namespace std;
 
 typedef vector< vector<int>> Matrix;
-
-const int TESTING = 0;
-char* READS_FILE;
 
 const int NUM_READS = 1168;
 const int READ_SIZE = 100;
@@ -94,14 +97,14 @@ int Node::Count = 1;
 Matrix D( NUM_READS, vector<int>( NUM_READS ) );
 
 // By storing adjacencies separately, we can exclude any overlaps below a
-// certain threshold, and by using sets, we can easily keep the adjacencis
+// certain threshold, and by using sets, we can easily keep the adjacencies
 // ordered by decreasing overlap.  This allows an easy greedy approach
 // to finding a hamiltonion path.
 vector< set< pair<int, int>>> ADJ( NUM_READS );
 const int MIN_OVERLAP = 20;
 
 // Each { i, j } in MAX_PAIRS indicates the overlap between reads i and j
-// are a maximum.
+// is a maximum.
 vector< pair<int, int>> MAX_PAIRS;
 
 // The maximum from MAX_PAIRS.
@@ -110,64 +113,23 @@ int MAX = 0;
 // forward references
 void ReadInput();
 string SolveGreedy();
-string SolveRecursive();
 void SolveAPSP();
 void BuildTree();
 
 int main()
 {
-    time_t start, finish;
-    
-    if ( TESTING )
-        start = time( NULL );
-    
-    ReadInput();
-    
+    for ( int i = 0 ; i < NUM_READS ; i++ )
+    {
+        cin >> G[ i ];
+        G[ i ].push_back( TERM_CHAR );
+    }
+
     SolveAPSP();
     string genome = SolveGreedy();
     
-    if ( TESTING )
-    {
-        finish = time( NULL );
-        printf( "Genome length: %lu\nProcess time: %.2f\n",
-               genome.length(),
-               difftime( finish, start ) );
-        
-    }
-    else
-        printf( "%s\n", genome.c_str() );
+    cout << genome << endl;
     
     return 0;
-}
-
-void ReadInput()
-{
-    if ( TESTING )
-    {
-        ifstream ifs;
-        ifs.open( READS_FILE );
-        if ( ifs.is_open() )
-        {
-            string line;
-            int i;
-            
-            while ( getline( ifs, line ) )
-            {
-                line.push_back( TERM_CHAR );
-                G[ i ] = line;
-                i++;
-            }
-        }
-        ifs.close();
-    }
-    else
-    {
-        for ( int i = 0 ; i < NUM_READS ; i++ )
-        {
-            cin >> G[ i ];
-            G[ i ].push_back( TERM_CHAR );
-        }
-    }
 }
 
 // Brute force. A more efficient strategy is used below in SolveAPSP().
@@ -184,91 +146,9 @@ int overlap( string& a, string& b )
     return 0;
 }
 
-// With the first read from order, succesively append the substrings of the
-// next read from order excluding any overlap. When done, just remove
-// any overlap between the end of the string and the beginning.
-string AssembleReads( vector<int>& order )
-{
-    string res( G[ order[ 0 ] ] );
-    res.pop_back();
-    int u, v, d;
-    
-    for ( int i = 0 ; i < NUM_READS - 1 ; i++ )
-    {
-        u = order[ i ];
-        v = order[ i + 1 ];
-        d = D[ u ][ v ];
-        string a( G[ v ] );
-        a.pop_back();
-        res += a.substr( d );
-    }
-    
-    size_t l = ( res.length() / 2 );
-    string a( res.substr( res.length() - l ) );
-    string b( res.substr( 0, l ) );
-    d = overlap( a, b );
-    
-    res.erase( 0, d );
-    
-    return res;
-}
-
-// Recursive call to find a hamiltonian path.
-void SolveVisit( int u, vector<int>& path, vector<bool>& visited )
-{
-    visited[ u ] = 1;
-    path.push_back( u );
-    if ( path.size() == NUM_READS ) // We have a Hamiltonian path.
-        return;
-    
-    // Iterate through adjacencies which are already sorted in decreasing
-    // order by overlap.
-    set< pair<int, int>>::iterator it;
-    for ( it = ADJ[ u ].begin() ; it != ADJ[ u ].end() ; it++ )
-    {
-        int v = it->second;
-        if ( !visited[ v ] )
-            SolveVisit( v, path, visited );
-        
-        if ( path.size() == NUM_READS ) // we're done
-            return;
-    }
-    // Dead end => backtrack
-    path.pop_back();
-}
-
-// Starting from the end node for each maximum edge in MAX_PAIRS, Use a
-// "greedy" dfs to find a hamilton path, if it exists. Use the path to
-// assemble the reads and return the string with minimum length.
-string SolveRecursive()
-{
-    vector<int> path;
-    string res;
-    
-    for ( int i = 0 ; i < MAX_PAIRS.size() ; i++ )
-    {
-        path.clear();
-        vector<bool> visited( NUM_READS );
-        int u = MAX_PAIRS[ i ].first;
-        int v = MAX_PAIRS[ i ].second;
-        
-        // u -> v has maximum weight.
-        path.push_back( u );
-        visited[ u ] = 1;
-        SolveVisit( v, path, visited ); // greedy start
-        
-        if ( path.size() == NUM_READS ) // hamiltonian path
-        {
-            string s = AssembleReads( path );
-            
-            if ( res.empty() || s.length() < res.length() )
-                res = s;
-        }
-    }
-    return res;
-}
-
-// Like above but just straigt greedy.
+// Starting with each pair of reads from MAX_PAIRS, continue taking the next 
+// available read with maximum overlap and reassemble the genome.  The string
+// of minimal length is returned.
 string SolveGreedy()
 {
     string res;
@@ -279,7 +159,7 @@ string SolveGreedy()
         int v = MAX_PAIRS[ i ].second;
         int d = D[ u ][ v ];
         string s( G[ u ] );
-        s.pop_back();
+        s.pop_back();       // Don't forget to remove the terminal char
         s += G[ v ].substr( d );
         s.pop_back();
         vector<bool> used( NUM_READS );
@@ -294,12 +174,13 @@ string SolveGreedy()
             while ( it != ADJ[ u ].end() && used[ it->second ]  )
                 it++;
             
+            // Since we have a minimum on overlap, we might reach a dead end.
             if ( it == ADJ[ u ].end() )
             {
                 ok = 0;
                 break;
             }
-            
+            // ADJ[ u ] is already sorted so the next unused node is a maximum.
             v = it->second;
             d = D[ u ][ v ];
             s += G[ v ].substr( d );
@@ -309,12 +190,14 @@ string SolveGreedy()
         
         if ( ok )
         {
+            // Remove any overlap from the end of the string and the start.
             size_t l = res.length() / 2;
             string a( s.substr( s.length() - l ) );
             string b( s.substr( 0, l ) );
             int d = overlap( a, b );
             if ( d > 0 )
                 s.erase( 0, d );
+
             if ( res.empty() || s.length() < res.length() )
                 res = s;
         }
@@ -375,10 +258,14 @@ void DFS( int node, vector< stack<int>>& S )
                         // the top of the stack is the largest j -> i overlap
                         int v = S[ i ].top();
                         
+                        // the magnitude of the overlap is the length of the
+                        // path label.
                         int d = Nodes[ v ].path_length;
                         
                         D[ i ][ j ] = d;
                         
+                        // Keep track of the largest overlaps to use
+                        // as a starting point for reassembly.
                         if ( d >= MIN_OVERLAP )
                             ADJ[ i ].insert( { READ_SIZE - d, j } );
                         
@@ -401,17 +288,15 @@ void DFS( int node, vector< stack<int>>& S )
 }
 
 
-// Using the strategy outlined by Dan Gusfield, First, create a general suffix
-// tree from the set of reads and a stack for each read. While performing a
-// depth first search, any node v incedent to a terminal edge has the indeces of
-// the reads whose suffixes terminate at that node in a container L[ v ]. Push
-// this node onto of the stack i for each i in L[ v ]. When a leaf node is
-// reached representing a complete read, then the top of the i-th stack is
-// the node whose path length is the maximum suffix prefix match between the
-// corresponding reads. . No overlap occurs when the stack is empty. When
-// the search moves back above an internal node v, pop the top the stack for
-// each index i such that i is in L[ v ]. See Gusfield's "Algorithms on
-// Strings, Trees, and Sequences."
+// First, create a generalized suffix tree from the set of reads and a set of
+// stacks, one for each read. Using a depth first search, any node v incedent 
+// to a terminal edge has the indicess of the corresponding reads in a 
+// container L[ v ]. Push this node onto the i-th stack for all i  in L[ v ]. 
+// When a leaf node is reached and the path label is an entire read, then the
+// path length of the node on the top if a stack is a maximum suffix prefix 
+// match. A stack is empty when there is no overlap. When the search moves 
+// back above a node v, pop the top the stacd stack for each index in L[ v ]. 
+// See Gusfield's "Algorithms on Strings, Trees, and Sequences."
 void SolveAPSP()
 {
     // Construct the suffix tree and stacks;
@@ -424,7 +309,6 @@ void SolveAPSP()
 }
 
 // Suffix Tree implementation.
-
 Edge::Edge( int s, int n, int a, int b )
 {
     string_index = s;
