@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NUM_READS = 1168;
+const int NUM_READS = 1618;
 const int READ_SIZE = 100;
 const char TERM_CHAR = '$';
 vector<string> G( NUM_READS );
@@ -120,7 +120,7 @@ struct Node
 // The combined length of all the reads ( including a terminal character )
 // and a very large prime number;
 //
-const int MAX_LENGTH = 116900;
+const int MAX_LENGTH = 161900;
 const int HASH_TABLE_SIZE = 500009;
 
 // The suffix tree.
