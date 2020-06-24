@@ -18,6 +18,9 @@ struct Edge {
     int to;
 };
 
+/*
+ *
+ */
 struct ConvertGSMNetworkProblemToSat {
     // 3-COLOR -> SAT reduction
     int numVertices;
