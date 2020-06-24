@@ -16,6 +16,11 @@ of Economics. The courses are ordered:
 
 Assembles the phi X174 phage genome from 1618 simulated error free reads.
 
+[budget_allocation.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Advanced%20Algorithms%20and%20Complexity/Programming%20Assignment%203/budget_allocation.cpp)
+
+An ILP to SAT reduction. The corresponding formula in CNF form is printed
+for use in a SAT solver.
+
 [puzzle.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%202/puzzle.cpp)
 
 Given 25 puzzle pieces, returns a 5 x 5 grid of the "solved" puzzle.

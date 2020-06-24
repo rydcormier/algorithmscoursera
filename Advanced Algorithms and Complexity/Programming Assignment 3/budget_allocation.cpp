@@ -6,6 +6,10 @@
 //
 //  Created by Ryan Cormier on 4/11/2020
 //
+//  Given the constraints of an Interger linear program, this program
+//  reduces the problem to SAT and prints out the correspondin formula in
+//  CNF form for a SAT solver.
+//
 
 #include <ios>
 #include <iostream>
@@ -72,16 +76,18 @@ Vector logical_negate(const Vector&, const Vector&);
 
 Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
     Matrix formula;
-      
-    // Constraint:
-    //      Any combination of the nonzero coefficients of an inequality must
-    //      satisfy that inequality. For example, if a_p, a_q, and a_r are the
-    //      nonzero coefficients of an inequality and b_i is the constraining
-    //      value, if setting (x_p, x_q, and x_r) to (1, 0, 1) violates the
-    //      inequality, add a clause for the negation of this combination.
-    //          -(x_p && -x_q && x_r) == (-x_p || x_q || -x_r)
-    //      Since there are at most 3 nonzero coefficients at a time, checking
-    //      all combinations isn't cost prohibitive.
+     
+    /*
+     *  Constraint:
+     *      Any combination of the nonzero coefficients of an inequality must
+     *      satisfy that inequality. For example, if a_p, a_q, and a_r are the
+     *      nonzero coefficients of an inequality and b_i is the constraining
+     *      value, if setting (x_p, x_q, and x_r) to (1, 0, 1) violates the
+     *      inequality, add a clause for the negation of this combination.
+     *          -(x_p && -x_q && x_r) == (-x_p || x_q || -x_r)
+     *      Since there are at most 3 nonzero coefficients at a time, checking
+     *      all combinations isn't cost prohibitive.
+     */
     for (int i = 1; i <= m; i++) {
         Vector a = A[i];
         Vector nonzero_values, nonzero_indeces;
@@ -120,6 +126,8 @@ Matrix ConvertILPToSAT::getEquisatisfiableSATFormula() {
     return formula;
 }
 
+// Depending on the value of TESTING either the formula for a SAT solver
+// or for the autograder.
 void ConvertILPToSAT::printEquisatisfiableSATFormula() {
     Matrix formula = getEquisatisfiableSATFormula();
     if (TESTING) {
@@ -137,6 +145,7 @@ void ConvertILPToSAT::printEquisatisfiableSATFormula() {
     }
 }
 
+// Below are some vector functions to make the code a little cleaner.
 Vector hadamard_product(const Vector &a, const Vector &b) {
     size_t n = a.size();
     if (b.size() != n)
