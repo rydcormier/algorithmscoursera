@@ -19,3 +19,8 @@ Assembles the phi X174 phage genome from 1618 simulated error free reads.
 [puzzle.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%202/puzzle.cpp)
 
 Given 25 puzzle pieces, returns a 5 x 5 grid of the "solved" puzzle.
+
+[eulerian_cycle.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%202/eulerian_cycle.cpp)
+
+Determines if the given directed graph is Eulerian and if so a Eulerian \
+path is printed to standard output.
