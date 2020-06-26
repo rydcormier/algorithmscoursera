@@ -20,7 +20,7 @@ a single possible Eulerian cycle.
 
 [circulation.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%203/circulation.cpp)
 
-Determines if a circultaion on the given flow network is feasible and if so, \
+Determines if a circulataion on the given flow network is feasible and if so, \
 prints the flow of each edge to standard output.
 
 [phi_X174_error_free_overlap.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%201/phiX174_error_free_overlap.cpp)
