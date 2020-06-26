@@ -20,7 +20,7 @@ a single possible Eulerian cycle.
 
 [circulation.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%203/circulation.cpp)
 
-Determines if a circultaion on the given flow network is feasible and if so,
+Determines if a circultaion on the given flow network is feasible and if so, \
 prints the flow of each edge to standard output.
 
 [phi_X174_error_free_overlap.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%201/phiX174_error_free_overlap.cpp)
@@ -29,5 +29,5 @@ Assembles the phi X174 phage genome from 1618 simulated error free reads.
 
 [budget_allocation.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Advanced%20Algorithms%20and%20Complexity/Programming%20Assignment%203/budget_allocation.cpp)
 
-An ILP to SAT reduction. The corresponding formula in CNF form is printed
+An ILP to SAT reduction. The corresponding formula in CNF form is printed \
 for use in a SAT solver.
