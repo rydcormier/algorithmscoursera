@@ -84,8 +84,10 @@ public:
          *
          * It turns out that id ^ 1 works for both cases. Think this through!
          */
+        
+        int b_id = ( ( id % 2 ) == 0  ? id + 1 : id - 1 );
         edges[id].flow += flow;
-        edges[id ^ 1].flow -= flow;
+        edges[b_id].flow -= flow;
     }
 };
 
