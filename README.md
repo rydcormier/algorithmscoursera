@@ -12,7 +12,7 @@ of Economics. The courses are ordered:
 
 ### Recent Work
 
-[phiX174_kmer.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%203/phiX174_kmer.cpp)
+[phiX174_kmer.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%202/phiX174_kmer.cpp)
 
 This program assembles the phi X174 phage genome from its 10-mer composition \
 by finding an Eulerian path on a De Bruign Graph.
