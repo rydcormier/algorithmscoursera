@@ -2,15 +2,16 @@
 
 My coursework for the *Algorithms and Data Structures* specialization \
 offered by UC San Diego and the National Research University Higher School \
-of Economics. The courses are ordered:
-1. Algorithmic Toolbox
-2. Data Structures
-3. Algorithms on Graphs
-4. Algorithms on Strings
-5. Advanced Algorithms and Complexity
-6. Keystone Project: Genome Assembly Programming Challenge
+of Economics. 
 
 ### Recent Work
+
+[bubble_detection.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%203/bubble_detection.cpp)
+
+Given a list of error-prone reads and two integers, k and t, this program \
+constructs a De Bruijn graph from the corresponding k-mers and counts the number \
+of bubbles--a pair of non-overlapping disjoint paths between two nodes with a path length \
+threshold of t.
 
 [phiX174_kmer.cpp](https://github.com/rydcormier/algorithmscoursera/blob/master/Genome%20Assembly%20Programming%20Challenge/Programming%20Assignment%202/phiX174_kmer.cpp)
 
