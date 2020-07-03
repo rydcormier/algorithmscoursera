@@ -3,9 +3,10 @@
 //
 //  Created by Ryan Cormier on 6/3/20
 //
-//  Given a list of error-prone reads, this program simulates the task
-//  of tip removal on De Bruijn graph constructed from the set of 15-mers
-//  generated from a list of error-prone reads.
+//  This program simulates the task of tip removal on a De Bruijn graph.
+//  The graph is constructed from the set of 15-mers generated from a list
+//  of error-prone reads. When finished, the number of tips found is printed
+//  to standard output.
 //
 #include <algorithm>
 #include <functional>
@@ -18,11 +19,9 @@ using namespace std;
 
 typedef vector< vector<int>> Table;
 
-//
 //  Values given in the problem. The number of reads is given as 400, but
-//  according the some forum rumors, there may be many more. I just
-//  keep pusing reads into a vector and then set NUM_READS after.
-//
+//  according the some forum rumors, there may be many more. Just keep pushing
+//  reads into a vector until they stop coming and then set NUM_READS.
 int NUM_READS;
 const int READ_SIZE = 100;
 const int HASH_TABLE_SIZE = 35023;
@@ -33,14 +32,15 @@ hash<string> hash_string;
 vector<string> Reads;
 
 //  Interface for the graph used in the main() function.
-namespace Graph {
-void Build();
-Table FindSCCs();
+namespace Graph
+{
+    void Build();
+    Table FindSCCs();
 }
 
-//  First we build a De Bruijn graph and then we find the strongly
-//  connected components. Any component with a single element corresponds
-//  to a tip.
+//  First build a De Bruijn graph and then find the strongly connected
+//  components. Any component with a single element corresponds to a tip.
+//  The number of tips is printed to standard output.
 int main()
 {
     for ( string s ; cin >> s ; )
@@ -56,8 +56,7 @@ int main()
     // count the tips
     int count = 0;
     for ( auto cc : scc )
-        if ( cc.size() == 1 )
-            count++;
+        if ( cc.size() == 1 ) count++;
     
     cout << count << endl;
     
@@ -65,15 +64,13 @@ int main()
 }
 
 //
-//  The Graph implemenation
+//  The implementer's interface
 //
 namespace Graph
 {
 //  The vertex for the De Bruijn graph. The vertex label is a (k - 1)mer from
 //  some read[ i ]. the label is stored by the index of the read in
-//  READs and by the position of the label's first caracter. Two vertices are
-//  equivalent if their labels are equivalent, ensuring the De Bruign graph
-//  will only contain unique (k - 1)mers.
+//  READs and by the position of the label's first caracter.
 struct Vertex
 {
     int key, id, pos;
@@ -85,34 +82,41 @@ struct Vertex
 // The number of vertices in the graph.
 int V;
 
-//  The vertices and edges as well as the egdes of the inverse graph.
+//  The vertices and edges of the graph.
 vector<Vertex> Vertices;
-Table Adj, InverseAdj;
+Table Adj;
 
-//  A hash table for building the graph.
-pair<string, int>* HashTable;
+//  A hash table and hash function for building the graph.
+vector<int>* HashTable;
 int Hash( const string& );
 
-// Find the post order of the vertices.
+// Find the post order of the vertices using a depth-first search.
 vector<int> PostOrder( );
 void PostVisit( int, vector<int>&, vector<bool>& );
-
-// just the reverse of post order
-vector<int> TopologicalSort( );
 
 // recursive call for FindSCCs.
 void SCCVisit( int, int, Table&, vector<bool>& );
 }
 
-//  Use a DFS on the inverse graph ordering the vertices by the reverse
+// ------------------------------------------------------------------------- //
+//                          The Implementation                               //
+//-------------------------------------------------------------------------- //
+
+//  Use a DFS on the inverse graph ordering the vertices by reverse
 //  post order on the original graph.
 Table Graph::FindSCCs()
 {
+    // generate the inverse
+    Table inverse_graph( V );
+    for ( int u = 0 ; u != V ; u++ )
+        for ( auto v : Adj[ u ] )
+            inverse_graph[ v ].push_back( u );
+    // Set up for the recursive call
     Table scc;
     int cc = 0;
     vector<bool> visited( V, 0 );
-    vector<int> order = TopologicalSort();
-    
+    vector<int> order = PostOrder();
+    reverse( order.begin(), order.end() );
     for ( auto u : order )
         if ( ! visited[ u ] )
             SCCVisit( u, cc++, scc, visited );
@@ -120,13 +124,13 @@ Table Graph::FindSCCs()
     return scc;
 }
 
-//  Build the graph: Connect the (K - 1)-mers in each K-mer. Use a hash table
-//  to quickly process a new node and avoid duplicate labels. If the edge
-//  is unique add it and its inverse to the graph.
+//  Connect the (K - 1)-mers in each K-mer. Use a hash table to quickly
+//  process a new node and avoid duplicate labels. If the edge is unique and
+//  not a self-loop, add it to the graph.
 void Graph::Build()
 {
     // Hash the vertex labels and store the vertex key.
-    HashTable = new pair<string, int>[ HASH_TABLE_SIZE ];
+    HashTable = new vector<int>( HASH_TABLE_SIZE, -1 );
     
     // use set to avoid parallell edges
     vector< set<int>> unique_adj;
@@ -148,23 +152,17 @@ void Graph::Build()
             unique_adj[ u ].insert( v );
         }
     }
-    // clean up and populate the adjacency list and its inverse.
+    // clean up and fill in the adjacency list.
     delete [] HashTable;
     V = static_cast<int>( unique_adj.size() );
     Adj.resize( V );
-    InverseAdj.resize( V );
     for ( int u = 0 ; u < V ; u++ )
-    {
         for ( auto v : unique_adj[ u ] )
-        {
             Adj[ u ].push_back( v );
-            InverseAdj[ v ].push_back( u );
-        }
-    }
 }
 
 // Recursive DFS on the Inverse graph.
-void Graph::SCCVisit( int u, int cc, Table& scc, vector<bool>& visited )
+void Graph::SCCVisit( int u, int cc, Table& scc, vector<bool>& visited, Table& inverse_adj )
 {
     visited[ u ] = 1;
     
@@ -186,17 +184,6 @@ vector<int> Graph::PostOrder( )
     for ( int u = 0 ; u != V ; u++ )
         if ( ! visited[ u ] )
             PostVisit( u, order, visited );
-    
-    return order;
-}
-
-// Reverse post order
-vector<int> Graph::TopologicalSort( )
-{
-    
-    vector<int> order = PostOrder( );
-    
-    reverse( order.begin(), order.end() );
     
     return order;
 }
@@ -226,13 +213,13 @@ string Graph::Vertex::Label() const
     return res;
 }
 
-//  Using a linear probe technique, either find an empty slot in the table
-//  or a string equal to our label.  If the slot is empty, set the key as
-//  the next available index in Vertices and append the vertex to Vertices. Then
-//  insert a label-key pair into the table. if the slot has an equivalant
-//  string, set the key to the integer from the table. If the slot is
-//  occupied with a different string, step forward until one of the other
-//  cases occur. Return the key when done.
+//  Hash the label and either find an unused slot in the table or the index
+//  of an existing vertex. If the slot is unused, set the key to the number
+//  of vertices already inserted, append the vertex to the Vertices container,
+//  and insert the key into the table. If the slot is used, compare the label
+//  of the vertex corresponding to the table value. If equal, set the key to
+//  the table value. If not, step forward until one of the first two cases
+//  occur. Return the key when done.
 int Graph::Vertex::Insert()
 {
     int i = Hash( Label() );
